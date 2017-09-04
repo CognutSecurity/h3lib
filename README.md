@@ -22,7 +22,9 @@ A learning model is considered as an actor, which impersonates how human process
 Now we are talking about big data all the time, because the data we can get nowadays explodes exponentially. There're notably a stack of open souced big data technologies which can help users deal with TB/PB level scale of data, such as Hadoop and its ecosystem. In our design, the raw data flows into the system in the nature of stream or minibatches, we believe the nature of data is streaming but not batch. A data batch is a state of information flow, it can change its value over time. 
 
 #### Distributed preprocessing 
-In most machine learning frameworks, models are not supposed to be responsible for preprocessing raw data. However, in our concept, actor is also capable of preprocessing raw data with a pipeline of preprocessors, each of which take care of a particular data block, and data blocks are then reduced to a full dataset for training later on. Each preprocessor contains a list of workers, each of which transforms the data block from one format to another. Obviously, preprocessors can be distributed on different machines, such as Spark cluster. But the workers in each preprocessor needs to be executed in a row. 
+In most machine learning frameworks, models are not supposed to be responsible for preprocessing raw data. However, in our concept, actor is also capable of preprocessing raw data with a pipeline of preprocessors, each of which take care of a particular data block, and data blocks are then reduced to a full dataset for training later on. Each preprocessor contains a list of workers, each of which transforms the data block from one format to another. Obviously, preprocessors can be distributed on different machines, such as Spark cluster. But the workers in each preprocessor needs to be executed in a row. The preprocessing is shown as follows, 
+
+![Preprocessing](docs/pipeline.png)
 
 Every actor mounts up with a pipeline of preprocessers, such that actors know exactly how the training data looks like. This can also allocate memory for actor internal neural network, which can further optimize training performance.  
 
