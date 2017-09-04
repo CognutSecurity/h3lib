@@ -7,18 +7,22 @@ Email: xh0217@gmail.com
 Copyright@2016, Stanford
 """
 
-from abc import ABCMeta, abstractmethod
-from datetime import datetime
-import dill, logging, sys
 import numpy as np
-import Preprocessor
+import dill, logging, sys
+from datetime import datetime
+from abc import ABCMeta, abstractmethod
+import h3mlcore.io.Preprocessor
 
 
-class H3BaseClassifier(object):
-   '''
-   Abstract class for classifiers of SmartEngine.
-   All smart components should inherit from this super class.
-   '''
+class H3BaseActor(object):
+    """Abstract class for all H3 machine learnign models
+       All models should inherit from this super class.
+
+    Args:
+
+    Returns:
+
+    """
 
    __metaclass__ = ABCMeta
 
@@ -50,6 +54,16 @@ class H3BaseClassifier(object):
       self.logger = self._init_logger(self.__name__, log_file, log_level)
 
    def _init_logger(self, name, logfile, level):
+     """
+
+     Args:
+       name: 
+       logfile: 
+       level: 
+
+     Returns:
+
+     """
       logger = logging.getLogger(name)
       logger.setLevel(logging.DEBUG)
       formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -64,6 +78,15 @@ class H3BaseClassifier(object):
 
    @abstractmethod
    def fit(self, X, y=None):
+     """
+
+     Args:
+       X: 
+       y:  (Default value = None)
+
+     Returns:
+
+     """
       # train on a training dataset
       self.logger.info(self.__name__ + ' is trained on {:d} samples with {:d} features.'.format(X.shape[0], X.shape[1]))
       pass
@@ -71,6 +94,15 @@ class H3BaseClassifier(object):
 
    @abstractmethod
    def partial_fit(self, X, y=None):
+     """
+
+     Args:
+       X: 
+       y:  (Default value = None)
+
+     Returns:
+
+     """
       # update model on a minibatch
       self.logger.info(self.__name__ +
                        ' is updated on a mini-batch dataset with {:d} samples and {:d} features.'. \
@@ -80,26 +112,53 @@ class H3BaseClassifier(object):
 
    @abstractmethod
    def predict(self, Xtt):
+     """
+
+     Args:
+       Xtt: 
+
+     Returns:
+
+     """
       # predict outputs for test dataset
       self.logger.info(self.__name__ + ' predicts on {:d} samples.'.format(Xtt.shape[0]))
       pass
 
    @abstractmethod
    def decision_function(self, Xtt):
+     """
+
+     Args:
+       Xtt: 
+
+     Returns:
+
+     """
       # predict decision score on test dataset
       self.logger.info(self.__name__ + ' predicts decision scores on {:d} samples.'.format(Xtt.shape[0]))
 
    def save(self, path):
+     """
+
+     Args:
+       path: 
+
+     Returns:
+
+     """
       # save checkpoint for the predictive model
       dill.dump(self, open(path, 'w+'))
       self.logger.info(self.__name__ + ' checkpoint is saved at {:s}.'.format(path))
 
    def add_preprocessor(self, pc):
-      '''
-      Append additional preprocessor to the list of preprocessor in this classifier.
-      :param pc: an instance of preprocessor
-      :return:
-      '''
+     """Append additional preprocessor to the list of preprocessor in this classifier.
+
+     Args:
+       pc: an instance of preprocessor
+
+     Returns:
+
+     """
 
       if isinstance(pc, Preprocessor):
          # append a new preprocessor
@@ -109,12 +168,17 @@ class H3BaseClassifier(object):
          sys.exit('Invalid preprocessor! exit!')
 
    def prepare_data(self, data_blocks, restart=False):
-      '''
-      prepare a trainable dataset from a list data blocks each of which is processable
+     """prepare a trainable dataset from a list data blocks each of which is processable
       by its preprocessor accordingly. Processed data blocks are concatenated as a bigger trainable dataset.
-      :param data_blocks: a list of data blocks
-      :return: A nxd trainable ndarray, d = sum(feature sizes of data blocks)
-      '''
+
+     Args:
+       data_blocks: a list of data blocks
+       restart:  (Default value = False)
+
+     Returns:
+       A nxd trainable ndarray, d = sum(feature sizes of data blocks)
+
+     """
 
       begin = True
       if self.preprocessor is not None:
@@ -153,7 +217,12 @@ class H3BaseClassifier(object):
 
    @abstractmethod
    def plot_classifier(self, **kwargs):
-      '''
-      Implement the plotting function in corresponding classifier class.
-      '''
+     """Implement the plotting function in corresponding classifier class.
+
+     Args:
+       **kwargs: 
+
+     Returns:
+
+     """
       pass
