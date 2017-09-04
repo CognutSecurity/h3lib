@@ -27,8 +27,8 @@ from os import path
 
 setup(
     name='h3mlcore',
-    version='0.2dev',
-    url='https://github.com/feuerchop/h3lib/tree/master/mlcore',
+    version='0.3dev',
+    url='https://github.com/CognutSecurity/h3mlcore',
     packages=find_packages(exclude=['test']),
     author='Huang Xiao',
     author_email='xh0217@gmail.com',
