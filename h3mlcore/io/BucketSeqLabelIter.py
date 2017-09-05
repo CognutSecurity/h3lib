@@ -16,29 +16,15 @@ import random, bisect
 
 
 class BucketSeqLabelIter(DataIter):
-   """Simple bucketing iterator for sequence classification.
-   Sequence has varying length, but label is a class label.
+    """Simple bucketing iterator for sequence classification.
+       Sequence has varying length, but label is a class label.
 
-   Parameters
-   ----------
-   seq : list of list of int
-       Encoded seq.
-   labels: list of int
-   batch_size : int
-       Batch size of the data.
-   invalid_label : int, optional
-       Key for invalid label, e.g. <end-of-sentence>. The default is -1.
-   data_dtype : float, optional
-       Data type of the encoding. The default data type is 'float32'.
-   label_dtype : int, optional
-       Data type of the label. The default data type is 'int'.
-   buckets : list of int, optional
-       Size of the data buckets. Automatically generated if None.
-   data_name : str, optional
-       Name of the data. The default name is 'data'.
-   label_name : str, optional
-       Name of the label. The default name is 'softmax_label'.
-   """
+    Args:
+
+    Returns:
+
+    
+    """
 
    def __init__(self, seqs, labels,
                 batch_size,
@@ -131,7 +117,7 @@ class BucketSeqLabelIter(DataIter):
       self.reset()
 
    def reset(self):
-      """Resets the iterator to the beginning of the data."""
+     """Resets the iterator to the beginning of the data."""
       self.curr_idx = 0
       random.shuffle(self.idx)
       # for buck in self.data:
@@ -144,7 +130,7 @@ class BucketSeqLabelIter(DataIter):
          self.ndlabel.append(mx.ndarray.array(label, dtype=self.label_dtype))
 
    def next(self):
-      """Returns the next batch of data."""
+     """Returns the next batch of data."""
       if self.curr_idx == len(self.idx):
          raise StopIteration
       i, j = self.idx[self.curr_idx]

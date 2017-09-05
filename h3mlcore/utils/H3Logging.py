@@ -32,7 +32,7 @@ def setup_logging(logging_config=None, level=logging.INFO):
     except IOError:
         logging.basicConfig(level=logging.INFO)
         logging.warning(
-            "logging config file: %s does not exist." % logging_config)
+            "logging config file: %s does not exist. using default logging" % logging_config)
     finally:
         logger = logging.getLogger('default')
         logger.setLevel(level)

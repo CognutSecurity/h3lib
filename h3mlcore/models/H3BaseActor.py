@@ -11,7 +11,9 @@ import numpy as np
 import dill, logging, sys
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
-import h3mlcore.io.Preprocessor
+from h3mlcore.utils.H3Logging import setup_logging
+from h3mlcore.io.Preprocessor import Preprocessor
+
 
 
 class H3BaseActor(object):
@@ -19,210 +21,172 @@ class H3BaseActor(object):
        All models should inherit from this super class.
 
     Args:
+      preprocessor: a list of preprocessors
+      max_epoch: maximal epochs to train
+      epoch_status: #epochs, if 0 means the classifier is never trained
+      log_file: file path to save logging
+      log_level: logging level, default logging.INFO
 
     Returns:
+      Instance of H3BaseActor
 
     """
 
-   __metaclass__ = ABCMeta
+    __metaclass__ = ABCMeta
 
-   def __init__(self,
+    def __init__(self,
                 preprocessor=None,
                 max_epoch=10,
+                epoch_status=0,
+                messager=None,
                 log_file=None,
-                log_level=3):
-      '''
-      Initialization
-      :param preprocessor: a list of preprocessors
-      :param max_epoch: maximal epochs to train
-      :param status: #epochs, if 0 means the classifier is never trained
-      :param log_level: logging level, possible value can be
-                         0: no logging
-                         1: DEBUG
-                         2: INFO
-                         3: WARNING
-                         4: ERROR
-                         5: CRITICAL
-      '''
+                log_config='logging.yaml',
+                log_level=logging.INFO):
 
-      self.max_epoch = max_epoch
-      self.status = 0
-      self.preprocessor = preprocessor
-      self.log_level = log_level
-      if log_file is None:
-         log_file = 'logs/' + self.__name__ + '.log'
-      self.logger = self._init_logger(self.__name__, log_file, log_level)
-
-   def _init_logger(self, name, logfile, level):
-     """
-
-     Args:
-       name: 
-       logfile: 
-       level: 
-
-     Returns:
-
-     """
-      logger = logging.getLogger(name)
-      logger.setLevel(logging.DEBUG)
-      formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-      fHandler = logging.FileHandler(logfile, mode='w+', encoding='utf8')
-      sHandler = logging.StreamHandler(stream=sys.stdout)
-      fHandler.setFormatter(fmt=formatter)
-      sHandler.setFormatter(fmt=formatter)
-      sHandler.setLevel(level * 10)
-      logger.addHandler(fHandler)
-      logger.addHandler(sHandler)
-      return logger
-
-   @abstractmethod
-   def fit(self, X, y=None):
-     """
-
-     Args:
-       X: 
-       y:  (Default value = None)
-
-     Returns:
-
-     """
-      # train on a training dataset
-      self.logger.info(self.__name__ + ' is trained on {:d} samples with {:d} features.'.format(X.shape[0], X.shape[1]))
-      pass
+        self.max_epoch = max_epoch
+        self.epoch_status = epoch_status
+        self.preprocessor = preprocessor
+        self.messager = messager
+        self.logger = setup_logging(logging_config=log_config, level=log_level)
 
 
-   @abstractmethod
-   def partial_fit(self, X, y=None):
-     """
 
-     Args:
-       X: 
-       y:  (Default value = None)
+    @abstractmethod
+    def fit(self, X, y=None):
+        """fit model on a dataset X and labels y
+        This is a scikit-learn style fit function.
 
-     Returns:
+        Args:
+        X: training dataset with N rows and M cols
+        y:  (Default value = None) training labels 
 
-     """
-      # update model on a minibatch
-      self.logger.info(self.__name__ +
-                       ' is updated on a mini-batch dataset with {:d} samples and {:d} features.'. \
-                       format(X.shape[0], X.shape[1]))
-      pass
+        """
+        # train on a training dataset
+        self.logger.info(self.__name__ + ' is trained on {:d} samples with {:d} features.'.format(X.shape[0], X.shape[1]))
+        pass
 
 
-   @abstractmethod
-   def predict(self, Xtt):
-     """
+    @abstractmethod
+    def partial_fit(self, X, y=None):
+        """fit model incrementally on a dataset X and labels y
+        This is a scikit-learn style fit function.
 
-     Args:
-       Xtt: 
+        Args:
+          X: training dataset with N rows and M cols
+          y:  (Default value = None) training labels 
 
-     Returns:
+        """
+        # update model on a minibatch
+        self.logger.info(self.__name__ +
+                        ' is updated on dataset with {:d} samples and {:d} features.'. \
+                        format(X.shape[0], X.shape[1]))
+        pass
 
-     """
-      # predict outputs for test dataset
-      self.logger.info(self.__name__ + ' predicts on {:d} samples.'.format(Xtt.shape[0]))
-      pass
 
-   @abstractmethod
-   def decision_function(self, Xtt):
-     """
+    @abstractmethod
+    def predict(self, Xtt):
+        """Model predicts on test dataset Xtt
 
-     Args:
-       Xtt: 
+        Args:
+          Xtt: testing dataset with N rows and M cols
 
-     Returns:
+        """
+        # predict outputs for test dataset
+        self.logger.info(self.__name__ + ' predicts on {:d} samples.'.format(Xtt.shape[0]))
+        pass
 
-     """
-      # predict decision score on test dataset
-      self.logger.info(self.__name__ + ' predicts decision scores on {:d} samples.'.format(Xtt.shape[0]))
+    @abstractmethod
+    def decision_function(self, Xtt):
+        """decision scores on test dataset 
 
-   def save(self, path):
-     """
+        Args:
+        Xtt: 
 
-     Args:
-       path: 
+        """
+        # predict decision score on test dataset
+        self.logger.info(self.__name__ + ' predicts decision scores on {:d} samples.'.format(Xtt.shape[0]))
 
-     Returns:
+    @abstractmethod
+    def save(self, path):
+        """save the actor on disk
 
-     """
-      # save checkpoint for the predictive model
-      dill.dump(self, open(path, 'w+'))
-      self.logger.info(self.__name__ + ' checkpoint is saved at {:s}.'.format(path))
+        Args:
+          path: file path to save the model
 
-   def add_preprocessor(self, pc):
-     """Append additional preprocessor to the list of preprocessor in this classifier.
+        """
+        pass
 
-     Args:
-       pc: an instance of preprocessor
+    def add_preprocessor(self, pc):
+        """Append additional preprocessor to the list of preprocessor in this classifier.
 
-     Returns:
+        Args:
+        pc: an instance of preprocessor
 
-     """
+        """
 
-      if isinstance(pc, Preprocessor):
-         # append a new preprocessor
-         self.preprocessor.append(pc)
-      else:
-         self.logger.error('Invalid preprocessor! exit!')
-         sys.exit('Invalid preprocessor! exit!')
+        if isinstance(pc, Preprocessor):
+            # append a new preprocessor
+            self.preprocessor.append(pc)
+        else:
+            self.logger.error('Invalid preprocessor! exit!')
 
-   def prepare_data(self, data_blocks, restart=False):
-     """prepare a trainable dataset from a list data blocks each of which is processable
-      by its preprocessor accordingly. Processed data blocks are concatenated as a bigger trainable dataset.
 
-     Args:
-       data_blocks: a list of data blocks
-       restart:  (Default value = False)
+    def prepare_data(self, data_blocks, restart=False):
+        """prepare a trainable dataset from a list data blocks each of which is processable
+        by its preprocessor accordingly. Processed data blocks are concatenated as a bigger trainable dataset.
 
-     Returns:
-       A nxd trainable ndarray, d = sum(feature sizes of data blocks)
+        Args:
+        data_blocks: a list of data blocks
+        restart:  (Default value = False)
 
-     """
+        Returns:
+        A nxd trainable ndarray, d = sum(feature sizes of data blocks)
 
-      begin = True
-      if self.preprocessor is not None:
-         nrows = 0
-         if type(self.preprocessor) is not list:
-            self.preprocessor = [self.preprocessor]
-         if type(data_blocks) is not list:
-            data_blocks = [data_blocks]
-         if len(self.preprocessor) != len(data_blocks):
-            self.logger.error('Num. of data blocks do not align with num. of preprocessors in classifer.')
-            sys.exit()
-         for pc, block in zip(self.preprocessor, data_blocks):
-            if len(block) == 0:
-               # empty data block
-               pc._FEATURE_NAMES = []
-               pc._FEATURE_SIZE = 0
-               continue
-            if begin:
-               output = pc.run(block, restart=restart)
-               nrows = output.shape[0]
-               begin = False
-            else:
-               cur_output = pc.run(block, restart=restart)
-               if cur_output.shape[0] != nrows:
-                  self.logger.error('Preprocessor {:s} does not align with previous data block dimensions'.format(pc.__name__))
-                  sys.exit(0)
-               else:
-                  output = np.c_[output, cur_output]
-         return output
-      else:
-         self.logger.warn('No preprocessor is found in this classifier, data blocks are directly concatenated.')
-         output = data_blocks[0]
-         for block in data_blocks[1:]:
-            output = np.c_[output, block]
-         return output
+        """
 
-   @abstractmethod
-   def plot_classifier(self, **kwargs):
-     """Implement the plotting function in corresponding classifier class.
+        begin = True
+        if self.preprocessor is not None:
+            nrows = 0
+            if type(self.preprocessor) is not list:
+                self.preprocessor = [self.preprocessor]
+            if type(data_blocks) is not list:
+                data_blocks = [data_blocks]
+            if len(self.preprocessor) != len(data_blocks):
+                self.logger.error('Num. of data blocks do not align with num. of preprocessors in classifer.')
+                sys.exit()
+            for pc, block in zip(self.preprocessor, data_blocks):
+                if len(block) == 0:
+                    # empty data block
+                    pc._FEATURE_NAMES = []
+                    pc._FEATURE_SIZE = 0
+                    continue
+                if begin:
+                    output = pc.run(block, restart=restart)
+                    nrows = output.shape[0]
+                    begin = False
+                else:
+                    cur_output = pc.run(block, restart=restart)
+                    if cur_output.shape[0] != nrows:
+                        self.logger.error('Preprocessor {:s} does not align with previous data block dimensions'.format(pc.__name__))
+                        sys.exit(0)
+                    else:
+                        output = np.c_[output, cur_output]
+            return output
+        else:
+            self.logger.warn('No preprocessor is found in this classifier, data blocks are directly concatenated.')
+            output = data_blocks[0]
+            for block in data_blocks[1:]:
+                output = np.c_[output, block]
+            return output
 
-     Args:
-       **kwargs: 
 
-     Returns:
+    def visualize(self, **kwargs):
+        """visualize the classifier.
 
-     """
-      pass
+        Args:
+        **kwargs: 
+
+        Returns:
+
+        """
+        pass

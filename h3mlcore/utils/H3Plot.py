@@ -9,23 +9,24 @@ Copyright@2016, Stanford
 """
 
 import numpy as np
+import sys, os.path, getopt, importlib
+from h3mlcore.utils.PlotHelper import *
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.manifold import MDS
-import getopt
-import sys
-import os.path
-import importlib
-import plot_utils as pltool
 from bokeh.plotting import figure, output_file, show, save
 from bokeh.models import Range1d, BoxZoomTool, PanTool, WheelZoomTool, ResetTool, HoverTool, ResizeTool, SaveTool, \
     ColumnDataSource
 
 
 class DataViz(object):
-    '''
-    A class for dataset viewer used to analyse features in data
+    """A class for dataset viewer used to analyse features in data
     set straightforwardly
-    '''
+
+    Args:
+
+    Returns:
+
+    """
 
     def __init__(self, config):
         '''
@@ -85,11 +86,22 @@ class DataViz(object):
                              xlim=None, ylim=None,
                              width=None, height=None,
                              **kwargs):
-        '''
-        return a figure instance
-        :param kwargs: parameters for creating a figure in bokeh
-        :return: a bokeh plot figure obj
-        '''
+        """return a figure instance
+
+        Args:
+          kwargs: parameters for creating a figure in bokeh
+          xlabel:  (Default value = "x label name")
+          ylabel:  (Default value = "y label name")
+          xlim:  (Default value = None)
+          ylim:  (Default value = None)
+          width:  (Default value = None)
+          height:  (Default value = None)
+          **kwargs: 
+
+        Returns:
+          a bokeh plot figure obj
+
+        """
 
         f = figure(plot_width=self.w,
                    plot_height=self.h,
@@ -120,6 +132,22 @@ class DataViz(object):
                           ylabel="Feature Values",
                           xlim=None, ylim=None,
                           width=None, height=None):
+        """
+
+        Args:
+          X: 
+          names:  (Default value = None)
+          title:  (Default value = "Feature Distribution")
+          xlabel:  (Default value = "Feature IDs")
+          ylabel:  (Default value = "Feature Values")
+          xlim:  (Default value = None)
+          ylim:  (Default value = None)
+          width:  (Default value = None)
+          height:  (Default value = None)
+
+        Returns:
+
+        """
         n, d = X.shape
         indices = []
         for i in np.arange(d):
@@ -146,14 +174,29 @@ class DataViz(object):
                   legend=None, legend_orientation='vertical', legend_localtion='top_right',
                   xlim=None, ylim=None,
                   width=None, height=None):
-        '''
-        Project high-dimensiona data to 2D for visulaization
+        """Project high-dimensiona data to 2D for visulaization
         using methods e.g., pca, kernel-pca, mds
-        :param X: N*d dataset
-        :param y: labels/None if not given
-        :param method: string in ['pca','kpca','mds']
-        :return: projected dataset X_project
-        '''
+
+        Args:
+          X: N*d dataset
+          y: labels/None if not given (Default value = None)
+          method: string in ['pca','kpca','mds'] (Default value = 'pca')
+          g:  (Default value = 0.5)
+          title:  (Default value = "Sample Distribution")
+          xlabel:  (Default value = "1st Dim.")
+          ylabel:  (Default value = "2nd Dim.")
+          legend:  (Default value = None)
+          legend_orientation:  (Default value = 'vertical')
+          legend_localtion:  (Default value = 'top_right')
+          xlim:  (Default value = None)
+          ylim:  (Default value = None)
+          width:  (Default value = None)
+          height:  (Default value = None)
+
+        Returns:
+          projected dataset X_project
+
+        """
 
         n, d = X.shape
 
@@ -208,9 +251,18 @@ class DataViz(object):
     def plot_corr(self, X, names=None,
                   title='Feature Correlations',
                   width=None, height=None):
-        '''
-        Correlation matrix plot
-        '''
+        """Correlation matrix plot
+
+        Args:
+          X: 
+          names:  (Default value = None)
+          title:  (Default value = 'Feature Correlations')
+          width:  (Default value = None)
+          height:  (Default value = None)
+
+        Returns:
+
+        """
 
         n, d = X.shape
         xcorr = np.corrcoef(X.T)
@@ -263,9 +315,26 @@ class DataViz(object):
                      legend=None, xlim=None, ylim=None,
                      legend_loc='bottom_right', legend_orientation='vertical',
                      width=None, height=None):
-        '''
-        plot a shaded error bar plot according to mean and std
-        '''
+        """plot a shaded error bar plot according to mean and std
+
+        Args:
+          xticks: 
+          mean: 
+          std: 
+          title:  (Default value = 'Error bar plot')
+          xlabel:  (Default value = "xticks")
+          ylabel:  (Default value = "y values")
+          legend:  (Default value = None)
+          xlim:  (Default value = None)
+          ylim:  (Default value = None)
+          legend_loc:  (Default value = 'bottom_right')
+          legend_orientation:  (Default value = 'vertical')
+          width:  (Default value = None)
+          height:  (Default value = None)
+
+        Returns:
+
+        """
         fig = self._get_figure_instance(title=title,
                                         xlabel=xlabel, ylabel=ylabel,
                                         xlim=xlim, ylim=ylim,
@@ -301,10 +370,26 @@ class DataViz(object):
                       legend=None, xlim=None, ylim=None,
                       width=None, height=None,
                       legend_loc='bottom_right', legend_orientation='vertical'):
-        '''
-        plot simple curves
+        """plot simple curves
         :return: figure
-        '''
+
+        Args:
+          xticks: 
+          yvalues: 
+          title:  (Default value = 'Simple curves plot')
+          xlabel:  (Default value = "xticks")
+          ylabel:  (Default value = "y values")
+          legend:  (Default value = None)
+          xlim:  (Default value = None)
+          ylim:  (Default value = None)
+          width:  (Default value = None)
+          height:  (Default value = None)
+          legend_loc:  (Default value = 'bottom_right')
+          legend_orientation:  (Default value = 'vertical')
+
+        Returns:
+
+        """
 
         fig = self._get_figure_instance(title=title,
                                         xlabel=xlabel, ylabel=ylabel,

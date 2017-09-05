@@ -13,19 +13,23 @@ Email: xh0217@gmail.com
 Copyright@2016, Stanford
 """
 
+import nltk, numpy
 from collections import OrderedDict
 from nltk.tokenize import RegexpTokenizer
 from sklearn.feature_extraction.text import TfidfVectorizer as TfidfVec
 from sklearn.preprocessing import normalize, StandardScaler, MinMaxScaler
-import nltk, numpy
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
 class Worker(object):
-    """
-    Super class for all pipeline workers
+    """Super class for all pipeline workers
     Input for every worker should be the same length of the output
     E.g., input a list of n emails returns a list of n lists of tokens
+
+    Args:
+
+    Returns:
+
     """
 
     def __init__(self):
@@ -33,12 +37,16 @@ class Worker(object):
 
 
 class Tokenizer(Worker):
-    """
-    Word tokenizer transforms a list of documents to list of tokens,
+    """Word tokenizer transforms a list of documents to list of tokens,
     each element in list corresponds to a training sample.
-
+    
     Tokenizer inherits nltk.word_tokenize to transform a list of texts to a list of token rows,
     each of which contains a list of tokens from the text.
+
+    Args:
+
+    Returns:
+
     """
 
     def __init__(self, params={'language': 'english'}):
@@ -46,6 +54,14 @@ class Tokenizer(Worker):
         self.language = params['language']
 
     def transform(self, dataset):
+        """
+
+        Args:
+          dataset: 
+
+        Returns:
+
+        """
         # print 'tokenizing...'
         tokens = list([])
         tokenizer = RegexpTokenizer(r'\w+')
@@ -55,17 +71,29 @@ class Tokenizer(Worker):
 
 
 class Stemmer(Worker):
-    """
-    Stemmer transforms a list of token rows to be stemmed tokens, e.g., moved -> move
-
+    """Stemmer transforms a list of token rows to be stemmed tokens, e.g., moved -> move
+    
     Stemmer inherits nltk.PorterStemmer to transform a list of token rows to a list of stemmed token rows,
     note that stemming can be problematic sometimes.
+
+    Args:
+
+    Returns:
+
     """
 
     def __init__(self, params=None):
         super(Stemmer, self).__init__()
 
     def transform(self, dataset):
+        """
+
+        Args:
+          dataset: 
+
+        Returns:
+
+        """
         # print 'stemming...'
         stemmer = nltk.PorterStemmer()
         stems = list([])
@@ -76,25 +104,26 @@ class Stemmer(Worker):
 
 
 class TfidfVectorizer(Worker):
-    """
-    TfidfVectorizer transforms a list of token rows to a list of real valued feature set
+    """TfidfVectorizer transforms a list of token rows to a list of real valued feature set.
+    
+    TfidfVectorizer inherits scikit-learn's tfidf method. We use the defaut tfidf vectorizer from sklearn, to support most important parameters
 
-    TfidfVectorizer inherits scikit-learn's tfidf method.
+    Args: 
+      params: 'stop_words' is a list of filtered words, default None, only support 'english'
+              'ngram_range' is a tuple (min_n, max_n) define lower and upper boundary of n-grams range
+              'max_df' is a float in [0,1] defines that a word with document frequency higher than it will be
+                      ignored.
+              'min_df' same as 'max_df', word with document frequency less than it will be ignored.
+              'max_features' is a Int define the maximal number of features (most frequent) being considered
+      More details see:
+          http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html
+
+    Return: 
+      instance of the TfidfVectorizer worker
+
     """
 
     def __init__(self, params):
-        """
-        We use the defaut tfidf vectorizer from sklearn, to support most important parameters
-        :param params: 'stop_words' is a list of filtered words, default None, only support 'english'
-                       'ngram_range' is a tuple (min_n, max_n) define lower and upper boundary of n-grams range
-                       'max_df' is a float in [0,1] defines that a word with document frequency higher than it will be
-                                ignored.
-                       'min_df' same as 'max_df', word with document frequency less than it will be ignored.
-                       'max_features' is a Int define the maximal number of features (most frequent) being considered
-        More details see:
-            http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html
-        :return: instance of the TfidfVectorizer worker
-        """
 
         if params.has_key('stop_words'):
             _stop_words = params['stop_words']
@@ -125,10 +154,14 @@ class TfidfVectorizer(Worker):
                                 max_features=_max_features)
 
     def transform(self, dataset):
-        """
-        transform is called to initialize the vectorizer, status will be refreshed
-        :param dataset: input dataset
-        :return: output vectorized Tfidf dataset in ndarray
+        """transform is called to initialize the vectorizer, status will be refreshed
+
+        Args:
+          dataset: input dataset
+
+        Returns:
+          output vectorized Tfidf dataset in ndarray
+
         """
 
         # print 'tf-idf vectorizing...'
@@ -137,10 +170,14 @@ class TfidfVectorizer(Worker):
         return samples.toarray()
 
     def partial_transform(self, dataset):
-        """
-        partial transform uses current vectorizer to fit more data, typically used for tranform testing data
-        :param dataset: input dataset
-        :return: output vectorized Tfidf dataset in ndarray
+        """partial transform uses current vectorizer to fit more data, typically used for tranform testing data
+
+        Args:
+          dataset: input dataset
+
+        Returns:
+          output vectorized Tfidf dataset in ndarray
+
         """
         if self.fitted is False:
             print 'TfidfVectorizer is not yet initialized on any dataset, exit...\n'
@@ -153,9 +190,14 @@ class TfidfVectorizer(Worker):
 
 
 class Normalizer(Worker):
-    """
-    Normalize input samples to unit norm. See also:
+    """Normalize input samples to unit norm. 
+    See also:
         - sklearn.preprocessing.normalize
+
+    Args:
+
+    Returns:
+
     """
 
     def __init__(self, params={'norm': 'l2'}):
@@ -170,10 +212,14 @@ class Normalizer(Worker):
         self.norm = params['norm']
 
     def transform(self, dataset):
-        """
-        transform is called to initialize the vectorizer, status will be refreshed
-        :param dataset: input dataset is a ndarray with shape=(n,d), where n is the sample size, and d is the feature size
-        :return: normalized dataset
+        """transform is called to initialize the vectorizer, status will be refreshed
+
+        Args:
+          dataset: input dataset is a ndarray with shape=(n,d), where n is the sample size, and d is the feature size
+
+        Returns:
+          normalized dataset
+
         """
 
         # print 'normalizing...'
@@ -182,11 +228,15 @@ class Normalizer(Worker):
 
 
 class FeatureScaler(Worker):
-    """
-    Scale an input dataset to zero-mean and unit variance.
+    """Scale an input dataset to zero-mean and unit variance.
     It supports now standard scaling and minmax scaling, see also:
         - sklearn.preprocessing.StandardScaler
         - sklearn.preprocessing.MinMaxScaler
+
+    Args:
+
+    Returns:
+
     """
 
     def __init__(self, params=None):
@@ -206,10 +256,14 @@ class FeatureScaler(Worker):
             self._worker = MinMaxScaler()
 
     def transform(self, dataset):
-        """
-        transform is called to scale the dataset feature to zero-mean and unit variance.
-        :param dataset: Nxd ndarray with shape=(n,d), where n is the sample size, and d is the feature size
-        :return: scaled dataset
+        """transform is called to scale the dataset feature to zero-mean and unit variance.
+
+        Args:
+          dataset: Nxd ndarray with shape=(n,d), where n is the sample size, and d is the feature size
+
+        Returns:
+          scaled dataset
+
         """
 
         dataset = numpy.array(dataset)
@@ -221,10 +275,14 @@ class FeatureScaler(Worker):
         return samples
 
     def partial_transform(self, dataset):
-        """
-        partial tranform use current scaler to scale input samples to zero-mean and unit variance.
-        :param dataset: Nxd ndarray with shape=(m,d)
-        :return: scaled samples
+        """partial tranform use current scaler to scale input samples to zero-mean and unit variance.
+
+        Args:
+          dataset: Nxd ndarray with shape=(m,d)
+
+        Returns:
+          scaled samples
+
         """
 
         if not self.fitted:
@@ -241,11 +299,15 @@ class FeatureScaler(Worker):
 
 
 class VaderSentiment(Worker):
-    """
-    VaderSentiment transforms a list of text corpus to a list of sentiment intensity scores.
+    """VaderSentiment transforms a list of text corpus to a list of sentiment intensity scores.
     We use the Vader sentiment analysis tools provided by NLTK, this worker is stateless.
     [Hutto, C.J. & Gilbert, E.E. (2014). VADER: A Parsimonious Rule-based Model for Sentiment Analysis of Social Media Text.
      Eighth International Conference on Weblogs and Social Media (ICWSM-14). Ann Arbor, MI, June 2014.]
+
+    Args:
+
+    Returns:
+
     """
 
     def __init__(self, params=None):
@@ -257,10 +319,14 @@ class VaderSentiment(Worker):
         super(VaderSentiment, self).__init__()
 
     def transform(self, dataset):
-        """
-        append an additional sentiment scores col. in the end of the dataset
-        :param dataset: a list of N text corpuses
-        :return: Nx1 vector of sentiment scores
+        """append an additional sentiment scores col. in the end of the dataset
+
+        Args:
+          dataset: a list of N text corpuses
+
+        Returns:
+          Nx1 vector of sentiment scores
+
         """
 
         sentiment_scores = list()
@@ -277,9 +343,7 @@ class VaderSentiment(Worker):
 
 
 class HashParser(Worker):
-    """
-    HashParser parses a list of hashes to get a list of features
-    """
+    """HashParser parses a list of hashes to get a list of features"""
 
     def __init__(self, params=None):
         """
@@ -292,10 +356,14 @@ class HashParser(Worker):
         self.feature_mapping = OrderedDict()
 
     def transform(self, dataset):
-        """
-        convert a list of hashes to a list of features
-        :param dataset: a list of hashes
-        :return: a list of feature vectors
+        """convert a list of hashes to a list of features
+
+        Args:
+          dataset: a list of hashes
+
+        Returns:
+          a list of feature vectors
+
         """
 
         # find all keys/values first
@@ -327,10 +395,14 @@ class HashParser(Worker):
         return numpy.array(features)
 
     def partial_transform(self, dataset):
-        """
-        partial_transform convert a list of dicts to features using current available keys
-        :param dataset: a list of dict
-        :return: a list of features
+        """partial_transform convert a list of dicts to features using current available keys
+
+        Args:
+          dataset: a list of dict
+
+        Returns:
+          a list of features
+
         """
 
         if not self.fitted:

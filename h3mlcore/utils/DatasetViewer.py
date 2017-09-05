@@ -1,14 +1,11 @@
+import numpy as np
+import sys, getopt, importlib, os.path
 import matplotlib.pyplot as plt
 from bokeh.plotting import figure, output_file, save, show
 from bokeh.models import ColumnDataSource, LabelSet
-import numpy as np
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.manifold import MDS, TSNE
-import getopt
-import sys
-import os.path
-import plot_utils as pltool
-import importlib
+from h3mlcore.utils.H3Plot import *
 
 
 class DatasetViewer(object):
@@ -129,7 +126,7 @@ class DatasetViewer(object):
             a1.set_xticklabels(names, rotation=90)
             a1.set_yticklabels(names)
 
-        pltool.setAxSquare(plt.gca())
+        setAxSquare(plt.gca())
 
     def visualize(self, X, y, names=None):
         """
@@ -144,16 +141,16 @@ class DatasetViewer(object):
         """
         plt.subplot(2, 2, 1)
         self.view_features_distribution(X)
-        pltool.setAxSquare(plt.gca())
+        setAxSquare(plt.gca())
         plt.subplot(2, 2, 2)
         self.project2d(X, y, method='kpca')
-        pltool.setAxSquare(plt.gca())
+        setAxSquare(plt.gca())
         plt.subplot(2, 2, 3)
         self.project2d(X, y, method='pca')
-        pltool.setAxSquare(plt.gca())
+        setAxSquare(plt.gca())
         plt.subplot(2, 2, 4)
         self.plot_corr(X, names)
-        pltool.setAxSquare(plt.gca())
+        setAxSquare(plt.gca())
         plt.show()
 
 
