@@ -13,11 +13,12 @@ Email: xh0217@gmail.com
 Copyright@2016, Stanford
 """
 
-import nltk, numpy
+import nltk, numpy as np
 from collections import OrderedDict
 from nltk.tokenize import RegexpTokenizer
-from sklearn.feature_extraction.text import TfidfVectorizer as TfidfVec
+from javalang.tokenizer import LexerError, tokenize as javalang_tokenize
 from sklearn.preprocessing import normalize, StandardScaler, MinMaxScaler
+from sklearn.feature_extraction.text import TfidfVectorizer as TfidfVec
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
@@ -35,8 +36,11 @@ class Worker(object):
     def __init__(self):
         self.fitted = False
 
+    def transform(self, X, y=None):
+        pass
 
-class Tokenizer(Worker):
+
+class WordTokenizer(Worker):
     """Word tokenizer transforms a list of documents to list of tokens,
     each element in list corresponds to a training sample.
     
@@ -50,10 +54,10 @@ class Tokenizer(Worker):
     """
 
     def __init__(self, params={'language': 'english'}):
-        super(Tokenizer, self).__init__()
+        super(WordTokenizer, self).__init__()
         self.language = params['language']
 
-    def transform(self, dataset):
+    def transform(self, X, y=None):
         """
 
         Args:
@@ -62,12 +66,62 @@ class Tokenizer(Worker):
         Returns:
 
         """
-        # print 'tokenizing...'
+
         tokens = list([])
         tokenizer = RegexpTokenizer(r'\w+')
-        for row in dataset:
+        for row in X:
             tokens.append(tokenizer.tokenize(row.lower()))
-        return tokens
+        return tokens, y
+
+
+class JavaTokenizer(Worker):
+    """Java tokenizer transforms a list of java code snippets to list of tokens,
+    each element in list corresponds to a training sample.
+    
+    JavaTokenizer use javalang.JavaTokenizer to transform a list of snippets to a list of token rows,
+    each of which contains a list of tokens from the code. If it raises value error while parsing, it skips
+    the sample.
+
+    Args:
+
+    """
+
+    def __init__(self, params={'language': 'java'}):
+        super(JavaTokenizer, self).__init__()
+        self.language = params['language']
+
+    def transform(self, X, y=None):
+        """
+        This function parses a list of java code snippets into a list of lists of tokens.
+
+        Args:
+        X: Java code snippets in a list of strings. 
+        y:  (Default value = None) a list of labels for code snippets 
+
+        Returns:
+        X: a list of lists of tokens
+        y: a list of labels 
+        discard_snippets: number of issue snippets which are not parsed. 
+
+        """
+        list_tokens = []
+        labels = []
+
+        if not y:
+            fake_y = np.zeros(len(X))
+        else:
+            fake_y = y
+
+        for sent, label in zip(X, fake_y):
+            try:
+                token_list = [token.value for token in list(javalang_tokenize(sent))]
+                list_tokens.append(token_list)
+                labels.append(label)
+            except LexerError:
+                print "Value error while parsing : \n %s" % (sent)
+                continue
+
+        return list_tokens, labels
 
 
 class Stemmer(Worker):
@@ -85,11 +139,12 @@ class Stemmer(Worker):
     def __init__(self, params=None):
         super(Stemmer, self).__init__()
 
-    def transform(self, dataset):
+    def transform(self, X, y=None):
         """
 
         Args:
-          dataset: 
+          X: input list of lists of tokens
+          y: (default None)
 
         Returns:
 
@@ -97,10 +152,10 @@ class Stemmer(Worker):
         # print 'stemming...'
         stemmer = nltk.PorterStemmer()
         stems = list([])
-        for row in dataset:
+        for row in X:
             stem_row = [stemmer.stem(token) for token in row]
             stems.append(stem_row)
-        return stems
+        return stems, y
 
 
 class TfidfVectorizer(Worker):
@@ -109,12 +164,6 @@ class TfidfVectorizer(Worker):
     TfidfVectorizer inherits scikit-learn's tfidf method. We use the defaut tfidf vectorizer from sklearn, to support most important parameters
 
     Args: 
-      params: 'stop_words' is a list of filtered words, default None, only support 'english'
-              'ngram_range' is a tuple (min_n, max_n) define lower and upper boundary of n-grams range
-              'max_df' is a float in [0,1] defines that a word with document frequency higher than it will be
-                      ignored.
-              'min_df' same as 'max_df', word with document frequency less than it will be ignored.
-              'max_features' is a Int define the maximal number of features (most frequent) being considered
       More details see:
           http://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html
 
@@ -123,107 +172,77 @@ class TfidfVectorizer(Worker):
 
     """
 
-    def __init__(self, params):
-
-        if params.has_key('stop_words'):
-            _stop_words = params['stop_words']
-        else:
-            _stop_words = None
-        if params.has_key('ngram_range'):
-            _ngram_range = params['ngram_range']
-        else:
-            _ngram_range = (1, 2)
-        if params.has_key('max_df'):
-            _max_df = params['max_df']
-        else:
-            _max_df = 1.0
-        if params.has_key('min_df'):
-            _min_df = params['min_df']
-        else:
-            _min_df = 1
-        if params.has_key('max_features'):
-            _max_features = params['max_features']
-        else:
-            _max_features = None
+    def __init__(self, params=None, *args, **kwargs):
 
         super(TfidfVectorizer, self).__init__()
-        self._worker = TfidfVec(stop_words=_stop_words,
-                                ngram_range=_ngram_range,
-                                max_df=_max_df,
-                                min_df=_min_df,
-                                max_features=_max_features)
+        self._worker = TfidfVec(*args, **kwargs)
 
-    def transform(self, dataset):
+    def transform(self, X, y=None):
         """transform is called to initialize the vectorizer, status will be refreshed
 
         Args:
-          dataset: input dataset
+          X: input dataset
+          y: (default: None) input labels
 
         Returns:
-          output vectorized Tfidf dataset in ndarray
+          samples: Tf-idf vectors in ndarray
 
         """
 
         # print 'tf-idf vectorizing...'
-        samples = self._worker.fit_transform(dataset)
+        samples = self._worker.fit_transform(X)
         self.fitted = True
-        return samples.toarray()
+        return samples.toarray(), y
 
-    def partial_transform(self, dataset):
+    def partial_transform(self, X, y=None):
         """partial transform uses current vectorizer to fit more data, typically used for tranform testing data
 
         Args:
-          dataset: input dataset
+          X: input dataset
+          y: (default: None) input labels
 
         Returns:
-          output vectorized Tfidf dataset in ndarray
+          samples: Tf-idf vectors in ndarray
 
         """
         if self.fitted is False:
-            print 'TfidfVectorizer is not yet initialized on any dataset, exit...\n'
+            print 'TfidfVectorizer is not yet initialized on any dataset, call transform instread. exit...\n'
             return False
         else:
-            # use existing vectorizer
-            # print 'tf-idf vectorizing...'
-            samples = self._worker.transform(dataset)
+            samples = self._worker.transform(X)
             return samples.toarray()
 
 
 class Normalizer(Worker):
     """Normalize input samples to unit norm. 
-    See also:
-        - sklearn.preprocessing.normalize
 
     Args:
-
-    Returns:
+      params: dict for parameters 
+              params['norm'] can be 'l1' or 'l2'
+      See also: sklearn.preprocessing.normalize
 
     """
 
     def __init__(self, params={'norm': 'l2'}):
-        """
-        Initialisation
-        :param params: params['norm'] can be 'l1' or 'l2'
-        :return: instance of Normalizer
-        """
+
         super(Normalizer, self).__init__()
         if not params.has_key('norm') or params['norm'] not in ['l1', 'l2']:
             print 'Error initialze a normalizer, needs set as l1 or l2'
         self.norm = params['norm']
 
-    def transform(self, dataset):
+    def transform(self, X, y=None):
         """transform is called to initialize the vectorizer, status will be refreshed
 
         Args:
           dataset: input dataset is a ndarray with shape=(n,d), where n is the sample size, and d is the feature size
 
         Returns:
-          normalized dataset
+          samples: (ndarray) normalized dataset
 
         """
 
         # print 'normalizing...'
-        samples = normalize(dataset, norm=self.norm, axis=1)
+        samples = normalize(X, norm=self.norm, axis=1)
         return samples
 
 
@@ -234,17 +253,12 @@ class FeatureScaler(Worker):
         - sklearn.preprocessing.MinMaxScaler
 
     Args:
-
-    Returns:
+      params: (dict) params['online'] Boolean value indicates if fit the data online
 
     """
 
     def __init__(self, params=None):
-        """
-        Initialization
-        :param params: params['online'] Boolean value indicates if fit the data online
-        :return: instance of StandardScaler
-        """
+        
         super(FeatureScaler, self).__init__()
         if params.has_key('type'):
             _type = params['type']
@@ -255,47 +269,50 @@ class FeatureScaler(Worker):
         if _type == 'minmax':
             self._worker = MinMaxScaler()
 
-    def transform(self, dataset):
+    def transform(self, X, y=None):
         """transform is called to scale the dataset feature to zero-mean and unit variance.
 
         Args:
-          dataset: Nxd ndarray with shape=(n,d), where n is the sample size, and d is the feature size
+          X: Nxd ndarray with shape=(n,d), where n is the sample size, and d is the feature size
+          y: (default: None) input labels
 
-        Returns:
-          scaled dataset
+        Returns: 
+          samples: (ndarray) scaled dataset
 
         """
 
-        dataset = numpy.array(dataset)
-        if dataset.shape[1] == 0:
+        # make sure it is ndarray
+        X = np.array(X)
+        if X.shape[1] == 0:
             # if the input contains nothing...
-            return numpy.array([])
-        samples = self._worker.fit_transform(dataset)
+            return np.array([])
+        samples = self._worker.fit_transform(X)
         self.fitted = True
-        return samples
+        return samples, y
 
-    def partial_transform(self, dataset):
+    def partial_transform(self, X):
         """partial tranform use current scaler to scale input samples to zero-mean and unit variance.
 
         Args:
-          dataset: Nxd ndarray with shape=(m,d)
+          X: Nxd ndarray with shape=(n,d), where n is the sample size, and d is the feature size
+          y: (default: None) input labels
 
-        Returns:
-          scaled samples
+        Returns: 
+          samples: (ndarray) scaled dataset
 
         """
 
         if not self.fitted:
-            print 'FeatureScaler is not yet initialized on any dataset, exit...\n'
+            print 'FeatureScaler is not yet initialized on any dataset, call transform instread. exit...\n'
             return False
         else:
             # use existing scaler
-            dataset = numpy.array(dataset)
-            if dataset.shape[1] == 0:
+            X = np.array(X)
+            if X.shape[1] == 0:
                 # if the input contains nothing...
-                return numpy.array([])
-            samples = self._worker.transform(dataset)
-            return samples
+                return np.array([])
+            samples = self._worker.transform(X)
+            return samples, y
 
 
 class VaderSentiment(Worker):
@@ -305,61 +322,58 @@ class VaderSentiment(Worker):
      Eighth International Conference on Weblogs and Social Media (ICWSM-14). Ann Arbor, MI, June 2014.]
 
     Args:
-
-    Returns:
+      params: (dict) parameters for VaderSentiment
+              params['corpuses'] is the only params
 
     """
 
     def __init__(self, params=None):
-        """
-        Initializer
-        :param params: params['corpuses'] is the only params
-        :return:
-        """
+       
         super(VaderSentiment, self).__init__()
 
-    def transform(self, dataset):
+    def transform(self, X, y):
         """append an additional sentiment scores col. in the end of the dataset
 
         Args:
-          dataset: a list of N text corpuses
+          X: a list of N text corpuses (document)
 
         Returns:
-          Nx1 vector of sentiment scores
+          sentiment_scores: (Nx1 ndarray)  sentiment scores
 
         """
 
         sentiment_scores = list()
         sid = SentimentIntensityAnalyzer()
-        for row in dataset:
+        for row in X:
             # tokenzie sentences
             lines_list = nltk.tokenize.sent_tokenize(row)
             # we compute the compouond scores for each sentence in one single text
             scores = [sid.polarity_scores(line)['compound'] for line in lines_list]
             # we compute avg. sentiment score for the text
-            sentiment_scores.append(numpy.mean(scores))
-        sentiment_scores = numpy.array(sentiment_scores).reshape(len(sentiment_scores), 1)
-        return sentiment_scores
+            sentiment_scores.append(np.mean(scores))
+        sentiment_scores = np.array(sentiment_scores).reshape(len(sentiment_scores), 1)
+        return sentiment_scores, y
 
 
 class HashParser(Worker):
-    """HashParser parses a list of hashes to get a list of features"""
+    """HashParser parses a list of hashes to get a list of features
+    
+    Args: 
+      params: (dict)
+
+    """
 
     def __init__(self, params=None):
-        """
-        Initializer
-        :param params: params['corpuses'] is the only params
-        :return:
-        """
+       
         super(HashParser, self).__init__()
         # keys contain a list of keys found in hash
         self.feature_mapping = OrderedDict()
 
-    def transform(self, dataset):
+    def transform(self, X):
         """convert a list of hashes to a list of features
 
         Args:
-          dataset: a list of hashes
+          X: a list of hashes
 
         Returns:
           a list of feature vectors
@@ -367,7 +381,7 @@ class HashParser(Worker):
         """
 
         # find all keys/values first
-        for item in dataset:
+        for item in X:
             for k in item.keys():
                 if k not in self.feature_mapping.keys():
                     value_list = list()
@@ -378,7 +392,7 @@ class HashParser(Worker):
                         self.feature_mapping[k].append(item[k])
 
         features = []
-        for item in dataset:
+        for item in X:
             row = []
             for k in self.feature_mapping.keys():
                 if item.has_key(k):
@@ -392,13 +406,13 @@ class HashParser(Worker):
             features.append(row)
 
         self.fitted = True
-        return numpy.array(features)
+        return np.array(features), y
 
-    def partial_transform(self, dataset):
+    def partial_transform(self, X):
         """partial_transform convert a list of dicts to features using current available keys
 
         Args:
-          dataset: a list of dict
+          X: a list of dict
 
         Returns:
           a list of features
@@ -406,11 +420,11 @@ class HashParser(Worker):
         """
 
         if not self.fitted:
-            print 'HashParser is not yet initialized on any dataset, exit...\n'
+            print 'HashParser is not yet initialized on any dataset, call transform instead. exit...\n'
             return False
         else:
             features = []
-            for item in dataset:
+            for item in X:
                 row = []
                 for k in self.feature_mapping.keys():
                     if item.has_key(k):
@@ -422,6 +436,6 @@ class HashParser(Worker):
                     else:
                         row.append(0)
                 features.append(row)
-            return numpy.array(features)
+            return np.array(features), y
 
 
