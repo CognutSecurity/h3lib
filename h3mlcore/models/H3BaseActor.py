@@ -35,7 +35,7 @@ class H3BaseActor(object):
     __metaclass__ = ABCMeta
 
     def __init__(self,
-                preprocessor=None,
+                preprocessors=None,
                 max_epoch=10,
                 epoch_status=0,
                 messager=None,
@@ -45,7 +45,7 @@ class H3BaseActor(object):
 
         self.max_epoch = max_epoch
         self.epoch_status = epoch_status
-        self.preprocessor = preprocessor
+        self.preprocessors = preprocessors
         self.messager = messager
         self.logger = setup_logging(logging_config=log_config, level=log_level)
 
@@ -131,53 +131,63 @@ class H3BaseActor(object):
             self.logger.error('Invalid preprocessor! exit!')
 
 
-    def prepare_data(self, data_blocks, restart=False):
+    def prepare_data(self, data_blocks, y_blocks, restart=False):
         """prepare a trainable dataset from a list data blocks each of which is processable
         by its preprocessor accordingly. Processed data blocks are concatenated as a bigger trainable dataset.
 
         Args:
         data_blocks: a list of data blocks
+        y_blocks: a list of labels blocks
         restart:  (Default value = False)
 
         Returns:
-        A nxd trainable ndarray, d = sum(feature sizes of data blocks)
+        data_X: (ndarray) A nxd trainable ndarray, d = sum(feature sizes of data blocks)
+        labels: (ndarray) An ndarray of n labels
 
         """
 
         begin = True
-        if self.preprocessor is not None:
+        if self.preprocessors is not None:
             nrows = 0
-            if type(self.preprocessor) is not list:
-                self.preprocessor = [self.preprocessor]
+            if type(self.preprocessors) is not list:
+                self.preprocessors = [self.preprocessors]
             if type(data_blocks) is not list:
                 data_blocks = [data_blocks]
-            if len(self.preprocessor) != len(data_blocks):
+            if type(y_blocks) is not list:
+                data_blocks = [data_blocks]
+            if len(self.preprocessors) != len(data_blocks):
                 self.logger.error('Num. of data blocks do not align with num. of preprocessors in classifer.')
                 sys.exit()
-            for pc, block in zip(self.preprocessor, data_blocks):
+            for pc, block, y in zip(self.preprocessors, data_blocks, y_blocks):
                 if len(block) == 0:
                     # empty data block
                     pc._FEATURE_NAMES = []
                     pc._FEATURE_SIZE = 0
+                    pc._SAMPLE_SIZE = 0
                     continue
                 if begin:
-                    output = pc.run(block, restart=restart)
-                    nrows = output.shape[0]
+                    output_x, output_y = pc.run(block, y, restart=restart)
+                    nrows = output_x.shape[0]
                     begin = False
                 else:
-                    cur_output = pc.run(block, restart=restart)
-                    if cur_output.shape[0] != nrows:
+                    cur_output_x, cur_output_y = pc.run(block, y, restart=restart)
+                    if cur_output_x.shape[0] != nrows:
                         self.logger.error('Preprocessor {:s} does not align with previous data block dimensions'.format(pc.__name__))
                         sys.exit(0)
                     else:
-                        output = np.c_[output, cur_output]
-            return output
+                        output_x = np.c_[output_x, cur_output_x]
+                        output_y = np.c_[output_y, cur_output_y]
+            return output_x, output_y
         else:
             self.logger.warn('No preprocessor is found in this classifier, data blocks are directly concatenated.')
-            output = data_blocks[0]
-            for block in data_blocks[1:]:
-                output = np.c_[output, block]
-            return output
+            output_x = data_blocks[0]
+            output_y = y_blocks[0]
+            
+            for block, y in zip(data_blocks[1:], y_blocks[1:]):
+                output_x = np.c_[output_x, block]
+                output_y = np.c_[output_y, y]
+                
+            return output_x, output_y
 
 
     def visualize(self, **kwargs):

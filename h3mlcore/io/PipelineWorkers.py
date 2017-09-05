@@ -172,10 +172,35 @@ class TfidfVectorizer(Worker):
 
     """
 
-    def __init__(self, params=None, *args, **kwargs):
+    def __init__(self, params=None):
+
+        if params.has_key('stop_words'):
+            _stop_words = params['stop_words']
+        else:
+            _stop_words = None
+        if params.has_key('ngram_range'):
+            _ngram_range = params['ngram_range']
+        else:
+            _ngram_range = (1, 2)
+        if params.has_key('max_df'):
+            _max_df = params['max_df']
+        else:
+            _max_df = 1.0
+        if params.has_key('min_df'):
+            _min_df = params['min_df']
+        else:
+            _min_df = 1
+        if params.has_key('max_features'):
+            _max_features = params['max_features']
+        else:
+            _max_features = None
 
         super(TfidfVectorizer, self).__init__()
-        self._worker = TfidfVec(*args, **kwargs)
+        self._worker = TfidfVec(stop_words=_stop_words,
+                                ngram_range=_ngram_range,
+                                max_df=_max_df,
+                                min_df=_min_df,
+                                max_features=_max_features)
 
     def transform(self, X, y=None):
         """transform is called to initialize the vectorizer, status will be refreshed
@@ -290,7 +315,7 @@ class FeatureScaler(Worker):
         self.fitted = True
         return samples, y
 
-    def partial_transform(self, X):
+    def partial_transform(self, X, y=None):
         """partial tranform use current scaler to scale input samples to zero-mean and unit variance.
 
         Args:
@@ -369,14 +394,16 @@ class HashParser(Worker):
         # keys contain a list of keys found in hash
         self.feature_mapping = OrderedDict()
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """convert a list of hashes to a list of features
 
         Args:
           X: a list of hashes
+          y: (default: None) a list of labels  
 
         Returns:
-          a list of feature vectors
+          X: (ndarray) a list of feature vectors
+          y: a list of labels or None
 
         """
 
@@ -408,7 +435,7 @@ class HashParser(Worker):
         self.fitted = True
         return np.array(features), y
 
-    def partial_transform(self, X):
+    def partial_transform(self, X, y=None):
         """partial_transform convert a list of dicts to features using current available keys
 
         Args:

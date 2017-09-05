@@ -12,8 +12,7 @@ Copyright@2017
 import mxnet as mx
 from mxnet.io import DataIter, DataBatch, DataDesc
 import numpy as np
-import random
-import bisect
+import random, bisect
 
 
 class BucketSeqLabelIter(DataIter):
@@ -37,13 +36,6 @@ class BucketSeqLabelIter(DataIter):
                     label_name='softmax_label',
                     data_dtype='float32',
                     label_dtype='int'):
-
-        # if not isinstance(min_bucket_key, int) or \
-        #    not isinstance(max_bucket_key, int) or \
-        #    min_bucket_key <= 0 or \
-        #    max_bucket_key <= 0:
-        #     print "min. or max bucket key must be positive integer."
-        #     sys.exit()
 
         super(BucketSeqLabelIter, self).__init__()
         if not buckets:

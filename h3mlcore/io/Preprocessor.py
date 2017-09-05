@@ -11,6 +11,8 @@ Copyright@2016, Stanford
 """
 
 import importlib
+import numpy as np
+from mxnet.io import NDArrayIter
 
 class Preprocessor(object):
     """Preprocessor main class: the pipeline for preprocessing raw data to generate vectorized feature set
@@ -23,15 +25,11 @@ class Preprocessor(object):
         workers = [('Tokenizer', {'language': 'english', 'nonstop': 'english'}),
                    ('Stemmer', {'type': 'Poster'})]
         prep = Preprocessor(workers)
-        dataset_tr = prep.run(X)
-
-    Args:
-
-    Returns:
+        dataset_tr = prep.run(X, y)
 
     """
 
-    def __init__(self, pipeline, feature_names=list()):
+    def __init__(self, pipeline, feature_names=list(), data_name='data', label_name='label'):
         """
         Preprocessing the raw data to build feature vectors, we use a pipeline to get our job done,
         after initialization pipeline is a list of objects to prepare the feature vectors
@@ -43,8 +41,11 @@ class Preprocessor(object):
         """
 
         self._PIPELINE = list()
+        self._DATA_NAME = data_name
+        self._LABEL_NAME = label_name
         self._FEATURE_NAMES = feature_names
         self._FEATURE_SIZE = 0
+        self._SAMPLE_SIZE = 0
         for elem in pipeline:
             worker_class = getattr(importlib.import_module("h3mlcore.io.PipelineWorkers"), elem['worker'])
             if elem.has_key('params'):
@@ -54,28 +55,29 @@ class Preprocessor(object):
             self._PIPELINE.append(worker)
 
 
-    def run(self, data_raw, restart=False):
+    def run(self, data_raw, y_raw, restart=False):
         """Start processing
 
         Args:
           data_raw: raw dataset to be preprocessed
-          restart:  (Default value = False) if we should restart transform data 
+          y_raw: raw labels to be preprocessed
+          restart:  (Default: False) if we should restart transform data 
 
         Returns:
-          ndarray: feature set for training
-
+          data: (ndarray) structured Nxd dataset
+          y: (ndarray)
         """
 
         for worker in self._PIPELINE:
             if restart or not worker.fitted:
-                data_raw = worker.transform(data_raw)
+                data_raw, y_raw = worker.transform(data_raw, y_raw)
             else:
-                data_raw = worker.partial_transform(data_raw)
+                data_raw, y_raw = worker.partial_transform(data_raw, y_raw)
 
             # we set the feature names from HashParser's feature mapping
             if worker.__class__.__name__ == 'HashParser':
                 self._FEATURE_NAMES = worker.feature_mapping.keys()
                 
-        self._FEATURE_SIZE = data_raw.shape[1]
-        return data_raw
+        self._SAMPLE_SIZE, self._FEATURE_SIZE = data_raw.shape    
+        return data_raw, np.array(y_raw)
 
