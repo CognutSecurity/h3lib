@@ -131,13 +131,13 @@ class H3BaseActor(object):
             self.logger.error('Invalid preprocessor! exit!')
 
 
-    def prepare_data(self, data_blocks, y_blocks, restart=False):
+    def prepare_data(self, data_blocks, y_blocks=None, restart=False):
         """prepare a trainable dataset from a list data blocks each of which is processable
         by its preprocessor accordingly. Processed data blocks are concatenated as a bigger trainable dataset.
 
         Args:
         data_blocks: a list of data blocks
-        y_blocks: a list of labels blocks
+        y_blocks: (default: None) a list of labels blocks
         restart:  (Default value = False)
 
         Returns:
@@ -147,17 +147,24 @@ class H3BaseActor(object):
         """
 
         begin = True
+        fake_y = False
+        # prepare list of blocks
+        if type(data_blocks) is not list:
+                data_blocks = [data_blocks]
+        if not y_blocks:
+            fake_y = True
+            y_blocks = [np.zeros(len(block)) for block in data_blocks] 
+        elif type(y_blocks) is not list:
+            y_blocks = [y_blocks]
+
         if self.preprocessors is not None:
             nrows = 0
             if type(self.preprocessors) is not list:
                 self.preprocessors = [self.preprocessors]
-            if type(data_blocks) is not list:
-                data_blocks = [data_blocks]
-            if type(y_blocks) is not list:
-                data_blocks = [data_blocks]
             if len(self.preprocessors) != len(data_blocks):
-                self.logger.error('Num. of data blocks do not align with num. of preprocessors in classifer.')
+                self.logger.error('You need same size preprocessors for your datasets.')
                 sys.exit()
+
             for pc, block, y in zip(self.preprocessors, data_blocks, y_blocks):
                 if len(block) == 0:
                     # empty data block
@@ -177,7 +184,6 @@ class H3BaseActor(object):
                     else:
                         output_x = np.c_[output_x, cur_output_x]
                         output_y = np.c_[output_y, cur_output_y]
-            return output_x, output_y
         else:
             self.logger.warn('No preprocessor is found in this classifier, data blocks are directly concatenated.')
             output_x = data_blocks[0]
@@ -187,6 +193,9 @@ class H3BaseActor(object):
                 output_x = np.c_[output_x, block]
                 output_y = np.c_[output_y, y]
                 
+        if fake_y:
+            return output_x, None
+        else:
             return output_x, output_y
 
 

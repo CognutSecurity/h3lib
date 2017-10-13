@@ -103,8 +103,9 @@ class H3TextClassifier(H3BaseActor):
         return self.classifier.decision_function(Xtt)
 
     def save(self, path):
-        dill.dump(self, path)
-        self.logger.info("Model saved in %s" % (path))
+        with open(path, 'w') as fd:
+            dill.dump(self, fd)   
+            self.logger.info("Model %s saved in %s" % (self.__name__, path))
 
     def visualize(self):
         pass

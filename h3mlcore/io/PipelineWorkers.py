@@ -235,7 +235,7 @@ class TfidfVectorizer(Worker):
             return False
         else:
             samples = self._worker.transform(X)
-            return samples.toarray()
+            return samples.toarray(), y
 
 
 class Normalizer(Worker):
@@ -268,7 +268,7 @@ class Normalizer(Worker):
 
         # print 'normalizing...'
         samples = normalize(X, norm=self.norm, axis=1)
-        return samples
+        return samples, y
 
 
 class FeatureScaler(Worker):
