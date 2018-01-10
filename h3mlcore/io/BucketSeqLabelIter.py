@@ -12,7 +12,8 @@ Copyright@2017
 import mxnet as mx
 from mxnet.io import DataIter, DataBatch, DataDesc
 import numpy as np
-import random, bisect
+import random
+import bisect
 
 
 class BucketSeqLabelIter(DataIter):
@@ -26,22 +27,24 @@ class BucketSeqLabelIter(DataIter):
 
     """
 
-    def __init__(self, seqs, labels,
-                    batch_size,
-                    buckets=None,
-                    min_bucket_key=None,
-                    max_bucket_key=None,
-                    invalid_label=-1,
-                    data_name='data',
-                    label_name='softmax_label',
-                    data_dtype='float32',
-                    label_dtype='int'):
+    def __init__(self,
+                 seqs,
+                 labels,
+                 batch_size,
+                 buckets=None,
+                 min_bucket_key=None,
+                 max_bucket_key=None,
+                 invalid_label=-1,
+                 data_name='data',
+                 label_name='softmax_label',
+                 data_dtype='float32',
+                 label_dtype='int'):
 
         super(BucketSeqLabelIter, self).__init__()
         if not buckets:
             # only consider bucket whose len >= batch_size
             buckets = [i for i, j in enumerate(np.bincount([len(s) for s in seqs]))
-                        if j >= batch_size]
+                       if j >= batch_size]
         buckets.sort()
 
         if min_bucket_key:
@@ -60,7 +63,7 @@ class BucketSeqLabelIter(DataIter):
                 ndiscard += 1
                 continue
             buff = np.full((buckets[buck_id],),
-                            invalid_label, dtype=data_dtype)
+                           invalid_label, dtype=data_dtype)
             buff[:len(seq)] = seq
             self.data[buck_id].append(buff)
             self.label[buck_id].append(labels[i])
@@ -85,11 +88,12 @@ class BucketSeqLabelIter(DataIter):
 
         # if self.major_axis == 0:
         self.provide_data = [DataDesc(name=self.data_name,
-                                        shape=(batch_size, self.default_bucket_key),
-                                        layout='NT')]
+                                      shape=(
+                                          batch_size, self.default_bucket_key),
+                                      layout='NT')]
         self.provide_label = [DataDesc(name=self.label_name,
-                                        shape=(batch_size,),
-                                        layout='NT')]
+                                       shape=(batch_size,),
+                                       layout='NT')]
         # elif self.major_axis == 1:
         #     self.provide_data = [DataDesc(
         #         name=self.data_name, shape=(
@@ -120,7 +124,8 @@ class BucketSeqLabelIter(DataIter):
         self.ndlabel = []
         for buck, label in zip(self.data, self.label):
             self.nddata.append(mx.ndarray.array(buck, dtype=self.data_dtype))
-            self.ndlabel.append(mx.ndarray.array(label, dtype=self.label_dtype))
+            self.ndlabel.append(mx.ndarray.array(
+                label, dtype=self.label_dtype))
 
     def next(self):
         """Returns the next batch of data."""
@@ -137,12 +142,12 @@ class BucketSeqLabelIter(DataIter):
         label = self.ndlabel[i][j:j + self.batch_size]
 
         return DataBatch([data, ],
-                        [label, ],
-                        pad=0,
-                        bucket_key=self.buckets[i],
-                        provide_data=[DataDesc(
-                            name=self.data_name, shape=data.shape,
-                            layout='NT'), ],
-                        provide_label=[DataDesc(
-                            name=self.label_name, shape=label.shape,
-                            layout='NT'), ])
+                         [label, ],
+                         pad=0,
+                         bucket_key=self.buckets[i],
+                         provide_data=[DataDesc(
+                             name=self.data_name, shape=data.shape,
+                             layout='NT'), ],
+                         provide_label=[DataDesc(
+                             name=self.label_name, shape=label.shape,
+                             layout='NT'), ])

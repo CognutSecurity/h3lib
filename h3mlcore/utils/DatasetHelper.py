@@ -9,8 +9,11 @@ Mail: huang.xiao@aisec.fraunhofer.de
 Copyright@2017
 '''
 
-
-import json, csv, os.path
+import urllib2
+import json
+import csv
+import os.path
+import sys
 import numpy as np
 from termcolor import colored
 from javalang.tokenizer import LexerError, tokenize as javalang_tokenize
@@ -146,3 +149,83 @@ def java_tokenize(snippets, labels=None):
             discard_snippets += 1
             continue
     return X, y, discard_snippets
+
+
+def download_GTSRB(dst_dir, unzip=False, remove_cache=False):
+    """Download German Traffic Sign Recognition Benchmark dataset
+
+    Args:
+      dst_dir: destination folder        
+      unzip: if the data should be unzipped
+      remove_cache: if the zip file should be removed, only valid when unzip is true
+
+    Returns:
+      None  
+
+    Raises:
+      HTTPError
+    """
+
+    url_tr = "http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Training_Images.zip"
+    url_tt = "http://benchmark.ini.rub.de/Dataset/GTSRB_Final_Test_Images.zip"
+    try:
+        resp_tr = urllib2.urlopen(url_tr)
+        resp_tt = urllib2.urlopen(url_tt)
+        print 30 * "--"
+        print "German Traffic Sign Recognition Benchmark"
+        print "Training dataset: %d MB | Test dataset: %d MB" % \
+            (int(resp_tr.info()['content-length']) / (1024 * 1024),
+             int(resp_tt.info()['content-length']) / (1024 * 1024))
+        print 30 * "--"
+        download_dir = os.path.join(dst_dir, "gtsrb")
+        if not os.path.exists(download_dir):
+            os.makedirs(download_dir)
+        with open(os.path.join(download_dir, url_tr.split('/')[-1]), 'w') as ftr:
+            print 'Dowloading training dataset into %s .. \n' % (download_dir)
+            total_chunks = 50
+            chunk_size = min(
+                int(resp_tr.info()['content-length']) / total_chunks, 1024 * 1024)
+            cnt = 1
+            while True:
+                chunk = resp_tr.read(chunk_size)
+                if not chunk:
+                    print "done!"
+                    break
+                else:
+                    ftr.write(chunk)
+                    cnt += 1
+                    progress = min(100, float(cnt) * chunk_size * 100 /
+                                   float(resp_tr.info()['content-length']))
+                    sys.stdout.write('\r{0:.1f}% {1:s}'.format(
+                        progress, int(progress / 5) * "|"))
+                    sys.stdout.flush()
+        ftr.close()            
+        print 30 * '--'
+        with open(os.path.join(download_dir, url_tt.split('/')[-1]), 'w') as ftt:
+            print 'Dowloading test dataset into %s .. \n' % (download_dir)
+            total_chunks = 50
+            chunk_size = min(
+                int(resp_tt.info()['content-length']) / total_chunks, 1024 * 1024)
+            cnt = 1
+            while True:
+                chunk = resp_tt.read(chunk_size)
+                if not chunk:
+                    print "done!"
+                    break
+                else:
+                    ftt.write(chunk)
+                    cnt += 1
+                    progress = min(100, float(cnt) * chunk_size * 100 /
+                                   float(resp_tt.info()['content-length']))
+                    sys.stdout.write('\r{0:.1f}% {1:s}'.format(
+                        progress, int(progress / 5) * "|"))
+                    sys.stdout.flush()
+        ftt.close()
+
+    except urllib2.URLError as e:
+        print e.message
+        return False
+
+
+if __name__ == '__main__':
+    download_GTSRB('/Users/hxiao/data')

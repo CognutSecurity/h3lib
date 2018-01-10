@@ -8,12 +8,13 @@ Copyright@2016, Stanford
 """
 
 import numpy as np
-import dill, logging, sys
+import dill
+import logging
+import sys
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from h3mlcore.utils.H3Logging import setup_logging
 from h3mlcore.io.Preprocessor import Preprocessor
-
 
 
 class H3BaseActor(object):
@@ -35,21 +36,19 @@ class H3BaseActor(object):
     __metaclass__ = ABCMeta
 
     def __init__(self,
-                preprocessors=None,
-                max_epoch=10,
-                epoch_status=0,
-                messager=None,
-                log_file=None,
-                log_config='logging.yaml',
-                log_level=logging.INFO):
+                 preprocessors=None,
+                 max_epoch=10,
+                 epoch_status=0,
+                 messager=None,
+                 log_file=None,
+                 log_config='logging.yaml',
+                 log_level=logging.INFO):
 
         self.max_epoch = max_epoch
         self.epoch_status = epoch_status
         self.preprocessors = preprocessors
         self.messager = messager
         self.logger = setup_logging(logging_config=log_config, level=log_level)
-
-
 
     @abstractmethod
     def fit(self, X, y=None):
@@ -62,9 +61,9 @@ class H3BaseActor(object):
 
         """
         # train on a training dataset
-        self.logger.info(self.__name__ + ' is trained on {:d} samples with {:d} features.'.format(X.shape[0], X.shape[1]))
+        self.logger.info(
+            self.__name__ + ' is trained on {:d} samples with {:d} features.'.format(X.shape[0], X.shape[1]))
         pass
-
 
     @abstractmethod
     def partial_fit(self, X, y=None):
@@ -78,10 +77,9 @@ class H3BaseActor(object):
         """
         # update model on a minibatch
         self.logger.info(self.__name__ +
-                        ' is updated on dataset with {:d} samples and {:d} features.'. \
-                        format(X.shape[0], X.shape[1]))
+                         ' is updated on dataset with {:d} samples and {:d} features.'.
+                         format(X.shape[0], X.shape[1]))
         pass
-
 
     @abstractmethod
     def predict(self, Xtt):
@@ -92,7 +90,8 @@ class H3BaseActor(object):
 
         """
         # predict outputs for test dataset
-        self.logger.info(self.__name__ + ' predicts on {:d} samples.'.format(Xtt.shape[0]))
+        self.logger.info(
+            self.__name__ + ' predicts on {:d} samples.'.format(Xtt.shape[0]))
         pass
 
     @abstractmethod
@@ -104,7 +103,8 @@ class H3BaseActor(object):
 
         """
         # predict decision score on test dataset
-        self.logger.info(self.__name__ + ' predicts decision scores on {:d} samples.'.format(Xtt.shape[0]))
+        self.logger.info(
+            self.__name__ + ' predicts decision scores on {:d} samples.'.format(Xtt.shape[0]))
 
     @abstractmethod
     def save(self, path):
@@ -130,7 +130,6 @@ class H3BaseActor(object):
         else:
             self.logger.error('Invalid preprocessor! exit!')
 
-
     def prepare_data(self, data_blocks, y_blocks=None, restart=False):
         """prepare a trainable dataset from a list data blocks each of which is processable
         by its preprocessor accordingly. Processed data blocks are concatenated as a bigger trainable dataset.
@@ -150,10 +149,10 @@ class H3BaseActor(object):
         fake_y = False
         # prepare list of blocks
         if type(data_blocks) is not list:
-                data_blocks = [data_blocks]
+            data_blocks = [data_blocks]
         if not y_blocks:
             fake_y = True
-            y_blocks = [np.zeros(len(block)) for block in data_blocks] 
+            y_blocks = [np.zeros(len(block)) for block in data_blocks]
         elif type(y_blocks) is not list:
             y_blocks = [y_blocks]
 
@@ -162,7 +161,8 @@ class H3BaseActor(object):
             if type(self.preprocessors) is not list:
                 self.preprocessors = [self.preprocessors]
             if len(self.preprocessors) != len(data_blocks):
-                self.logger.error('You need same size preprocessors for your datasets.')
+                self.logger.error(
+                    'You need same size preprocessors for your datasets.')
                 sys.exit()
 
             for pc, block, y in zip(self.preprocessors, data_blocks, y_blocks):
@@ -177,27 +177,29 @@ class H3BaseActor(object):
                     nrows = output_x.shape[0]
                     begin = False
                 else:
-                    cur_output_x, cur_output_y = pc.run(block, y, restart=restart)
+                    cur_output_x, cur_output_y = pc.run(
+                        block, y, restart=restart)
                     if cur_output_x.shape[0] != nrows:
-                        self.logger.error('Preprocessor {:s} does not align with previous data block dimensions'.format(pc.__name__))
+                        self.logger.error(
+                            'Preprocessor {:s} does not align with previous data block dimensions'.format(pc.__name__))
                         sys.exit(0)
                     else:
                         output_x = np.c_[output_x, cur_output_x]
                         output_y = np.c_[output_y, cur_output_y]
         else:
-            self.logger.warn('No preprocessor is found in this classifier, data blocks are directly concatenated.')
+            self.logger.warn(
+                'No preprocessor is found in this classifier, data blocks are directly concatenated.')
             output_x = data_blocks[0]
             output_y = y_blocks[0]
-            
+
             for block, y in zip(data_blocks[1:], y_blocks[1:]):
                 output_x = np.c_[output_x, block]
                 output_y = np.c_[output_y, y]
-                
+
         if fake_y:
             return output_x, None
         else:
             return output_x, output_y
-
 
     def visualize(self, **kwargs):
         """visualize the classifier.

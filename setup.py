@@ -62,7 +62,7 @@ setup(
         "causality==0.0.3",
         "dill==0.2.5",
         "simplejson==3.11.1",
-        "mxnet==0.11.0",
+        "mxnet==0.12.0",
         "libpgm==1.3",
         "numpy==1.13.1",
         "matplotlib==1.5.1",
