@@ -429,3 +429,28 @@ class DataViz(object):
         fig.legend.orientation = legend_orientation
 
         return fig
+
+
+    def send_to_server(self, server="ssh.informatik.tu-muenchen.de", port=22, user="xiaohu"):
+        '''
+        send plots to remote hosting server
+        :param server: server IP
+        :param port: server port
+        :param user: server user
+        :param pw: pass
+        :param ssh_file: pubkey
+        :return: status
+        '''
+
+        import paramiko
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname=server, port=port, username=user,
+                    key_filename='~/.ssh/id_rsa.pub')
+        ftp = ssh.open_sftp()
+        stats = ftp.put(self.output_file, "/u/halle/xiaohu/home_page/html-data/h3demo/" +
+                        self.output_file.split('/')[-1])
+        print '{:s} is transferred to {:s} at {:s}'.format(self.output_file.split('/')[-1], server, str(stats.st_atime))
+        return stats
+
