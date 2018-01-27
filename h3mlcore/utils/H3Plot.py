@@ -443,14 +443,16 @@ class DataViz(object):
         '''
 
         import paramiko
+        from termcolor import colored
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        home_dir = os.path.expanduser('~')
         ssh.connect(hostname=server, port=port, username=user,
-                    key_filename='~/.ssh/id_rsa.pub')
+                    key_filename='/'.join([home_dir, '.ssh/id_rsa.pub']))
         ftp = ssh.open_sftp()
         stats = ftp.put(self.output_file, "/u/halle/xiaohu/home_page/html-data/h3demo/" +
                         self.output_file.split('/')[-1])
-        print '{:s} is transferred to {:s} at {:s}'.format(self.output_file.split('/')[-1], server, str(stats.st_atime))
+        print colored('{:s} is transferred to {:s} at {:s}'.format(self.output_file.split('/')[-1], server, str(stats.st_atime)), 'green')
         return stats
 
