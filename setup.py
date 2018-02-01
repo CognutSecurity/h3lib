@@ -27,7 +27,7 @@ from os import path
 
 setup(
     name='h3mlcore',
-    version='0.7dev',
+    version='0.8dev',
     url='https://github.com/CognutSecurity/h3mlcore',
     packages=find_packages(exclude=['test']),
     author='Huang Xiao',
@@ -55,20 +55,26 @@ setup(
     ],
 
     install_requires=[
-        "nltk==3.2.1",
-        "pandas==0.18.1",
-        "termcolor==1.1.0",
-        "scipy==0.18.0",
-        "causality==0.0.3",
-        "dill==0.2.5",
-        "simplejson==3.11.1",
-        "mxnet==0.12.0",
-        "libpgm==1.3",
-        "numpy==1.13.1",
-        "matplotlib==1.5.1",
-        "javalang==0.11.0",
-        "scikit_learn==0.19.0",
-        "PyYAML==3.12"],
+        "setuptools == 36.5.0",
+        "nltk == 3.2.1",
+        "mxnet == 0.12.0",
+        "paramiko == 2.0.2",
+        "pandas == 0.18.1",
+        "termcolor == 1.1.0",
+        "scipy == 0.18.0",
+        "causality == 0.0.3",
+        "dill == 0.2.5",
+        "simplejson == 3.11.1",
+        "libpgm == 1.3",
+        "bokeh == 0.12.7",
+        "numpy == 1.13.1",
+        "matplotlib == 1.5.1",
+        "javalang == 0.11.0",
+        "scikit_learn == 0.19.1",
+        "PyYAML == 3.12"
+    ],
+
+    python_requires='>=2.6, !=3.*',
 
     keywords='machine learning data mining',
 
