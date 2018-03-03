@@ -38,14 +38,28 @@ The training process is similar as mxnet, minibatches will feed the neural netwo
 Actors can form a network where actors talk to each other via advanced messaging queue protocol, tools like Apache Kafka and RabbitMQ can easily handle this. Besides, we also use WebSocket to let actors talk to web frontend, so that web based users can interact with the training and testing models. Besides, we can leverage messagers to transfer knowledge between differend models, e.g., transfer learning. Distillation networks is a good example, where softmax output layer is transfered as an input layer for another network. In this way, the second actor is supposed to be more robust against adversarial learning attacks. 
 
 ## Dependencies 
+We mainly support three main ML frameworks, 
 
+* tensorflow == 1.4.1
+* mxnet == 0.12.0 
+* scikit-learn == 0.19.0
+
+To visualize, we rely on following, 
+
+* bokeh
+* matplotlib
 
 ## How to Install 
-
+```
+pip install h3mlcore
+```
 
 ## Hello World Tutorial
 
 ## Authors and Copyright
+
+| Huang Xiao, xh0217@gmail.com
+| Copyright@2018
 
 ## Acknowledge
 
