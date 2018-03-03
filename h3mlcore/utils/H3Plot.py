@@ -12,7 +12,7 @@ import numpy as np
 import sys, os.path, getopt, importlib
 from h3mlcore.utils.PlotHelper import *
 from sklearn.decomposition import PCA, KernelPCA
-from sklearn.manifold import MDS
+from sklearn.manifold import MDS, TSNE
 from bokeh.plotting import figure, output_file, show, save
 from bokeh.models import Range1d, BoxZoomTool, PanTool, WheelZoomTool, ResetTool, HoverTool, ResizeTool, SaveTool, \
     ColumnDataSource
@@ -214,6 +214,9 @@ class DataViz(object):
                     X_proj = projector.fit_transform(X)
                 elif method == 'mds':
                     projector = MDS(n_components=n_comp)
+                    X_proj = projector.fit_transform(X)
+                elif method == 'tsne':
+                    projector = TSNE(n_components=n_comp, perplexity=100)
                     X_proj = projector.fit_transform(X)
                 else:
                     print 'No projector found!'
