@@ -1,6 +1,15 @@
-__author__ = 'morgan'
+'''
+Gaussian process regression
+
+Author: Huang Xiao
+Group: Cognitive Security Technologies
+Institute: Fraunhofer AISEC
+Mail: huang.xiao@aisec.fraunhofer.de
+Copyright@2017
+'''
+
 import numpy as np
-from H3Kernels import kernel as kernel
+from h3mlcore.libs.H3Kernels import kernel
 
 
 class H3GPR(object):

@@ -16,9 +16,9 @@ import pickle
 import logging
 import yaml
 import logging.config
-from H3BaseActor import BaseActor
-from helpers.mxhelper import BasicArgparser
-from BucketSeqLabelIter import BucketSeqLabelIter
+from h3mlcore.models.H3BaseActor import H3BaseActor
+from h3mlcore.utils.MxHelper import BasicArgparser
+from h3mlcore.io.BucketSeqLabelIter import BucketSeqLabelIter
 
 
 class H3RNNSeqClassifier(H3BaseActor):
@@ -263,8 +263,8 @@ if __name__ == '__main__':
 
     from termcolor import colored
 #    from nltk.tokenize import word_tokenize
-    from sklearn.model_selection import train_test_split
-    from helpers.dataset_helper import load_snp17, java_tokenize
+    from sklearn.cross_validation import train_test_split
+    from h3mlcore.utils.DatasetHelper import load_snp17, java_tokenize
 
     # load data
     # datafile = "../datasets/npc_chat_data2.p"
@@ -291,7 +291,7 @@ if __name__ == '__main__':
     tt_iter = BucketSeqLabelIter(
         tt_data, tt_labels, buckets=buckets, batch_size=64)
 
-    clf = LSTMTextClassifier(input_dim=len(vocab), num_classes=np.unique(labels).size)
+    clf = H3RNNSeqClassifier(input_dim=len(vocab), num_classes=np.unique(labels).size)
     clf.initialize(tr_iter)
     clf.train_epochs(tr_iter, tt_iter, num_epochs=50)
 

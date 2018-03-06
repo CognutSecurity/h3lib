@@ -1,5 +1,14 @@
-# from sklearn.metrics.pairwise import pairwise_kernels as kernel
-from H3Kernels import kernel
+'''
+Indicative Support Vector Clustering
+
+Author: Huang Xiao
+Group: Cognitive Security Technologies
+Institute: Fraunhofer AISEC
+Mail: huang.xiao@aisec.fraunhofer.de
+Copyright@2017
+'''
+
+from h3mlcore.libs.H3Kernels import kernel
 import numpy as np
 
 

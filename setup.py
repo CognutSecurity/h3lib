@@ -71,7 +71,8 @@ setup(
         "matplotlib == 1.5.1",
         "javalang == 0.11.0",
         "scikit_learn == 0.19.1",
-        "PyYAML == 3.12"
+        "PyYAML == 3.12",
+        "bokeh==0.12.7"
     ],
 
     python_requires='>=2.6, !=3.*',
