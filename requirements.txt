@@ -9,10 +9,10 @@ causality==0.0.3
 dill==0.2.5
 simplejson==3.11.1
 libpgm==1.3
-bokeh==0.12.7
+bokeh==0.12.15
 numpy==1.13.1
 matplotlib==1.5.1
 javalang==0.11.0
 scikit_learn==0.19.1
 PyYAML==3.12
-bokeh==0.12.7
+bokeh==0.12.15

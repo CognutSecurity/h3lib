@@ -9,22 +9,26 @@ Copyright@2016, Stanford
 """
 
 import numpy as np
-import sys, os.path, getopt, importlib
+import sys
+import os.path
+import getopt
+import importlib
 from h3mlcore.utils.PlotHelper import *
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.manifold import MDS, TSNE
-from bokeh.plotting import figure, output_file, show, save
-from bokeh.models import Range1d, BoxZoomTool, PanTool, WheelZoomTool, ResetTool, HoverTool, ResizeTool, SaveTool, \
-    ColumnDataSource
+from bokeh.plotting import figure
+from bokeh.io import output_file, show, save
+from bokeh.models.tools import BoxZoomTool, PanTool, WheelZoomTool, ResetTool, HoverTool, SaveTool
+from bokeh.models.ranges import Range1d
+from bokeh.models.sources import ColumnDataSource
 
 
 class DataViz(object):
     """A class for dataset viewer used to analyse features in data
     set straightforwardly
 
-    Args:
-
-    Returns:
+    Args: Input a config JSON string to configure the style of the plots
+    Returns: a DataViz object
 
     """
 
@@ -56,7 +60,7 @@ class DataViz(object):
             self.colormap = config['colormap']
         else:
             # binary colors
-            self.colormap = 'RdYlBu'
+            self.colormap = 'viridis'
         if config.has_key('color'):
             self.color = config['color']
         else:
@@ -75,7 +79,7 @@ class DataViz(object):
             self.output_file = "myplots.html"
 
         self.binary_colors = ['#4285F4', '#EA4335']
-        self.default_tools = ["pan", "wheel_zoom", "resize", "reset"]
+        self.default_tools = ["pan", "wheel_zoom", "reset"]
 
         output_file(self.output_file, title=str.upper(
             ' '.join(self.output_file.split('/')[-1].split('.')[:-1])))
@@ -105,7 +109,7 @@ class DataViz(object):
 
         f = figure(plot_width=self.w,
                    plot_height=self.h,
-                   webgl=True,
+                   output_backend='webgl',
                    toolbar_location='above',
                    active_scroll='wheel_zoom',
                    tools=self.default_tools,
@@ -115,9 +119,9 @@ class DataViz(object):
         f.yaxis.axis_label = ylabel
 
         if xlim is not None and len(xlim) == 2:
-            f.set(x_range=Range1d(xlim[0], xlim[1]))
+            f.x_range = Range1d(xlim[0], xlim[1])
         if ylim is not None and len(ylim) == 2:
-            f.set(y_range=Range1d(ylim[0], ylim[1]))
+            f.y_range = Range1d(ylim[0], ylim[1])
 
         if width is not None:
             f.plot_width = width
@@ -126,7 +130,9 @@ class DataViz(object):
 
         return f
 
-    def feature_scatter1d(self, X, names=None,
+    def feature_scatter1d(self,
+                          X,
+                          names=None,
                           title="Feature Distribution",
                           xlabel="Feature IDs",
                           ylabel="Feature Values",
@@ -174,6 +180,7 @@ class DataViz(object):
                   legend=None, legend_orientation='vertical', legend_localtion='top_right',
                   xlim=None, ylim=None,
                   width=None, height=None):
+
         """Project high-dimensiona data to 2D for visulaization
         using methods e.g., pca, kernel-pca, mds
 
@@ -236,7 +243,8 @@ class DataViz(object):
         else:
             if np.unique(y).size > 2:
                 colors = getattr(importlib.import_module(
-                    'bokeh.palettes'), self.colormap + str(np.unique(y).size))
+                    'bokeh.palettes'), self.colormap)
+                colors = colors.__call__(np.unique(y).size)
             else:
                 colors = self.binary_colors
             if legend is None:
@@ -299,7 +307,7 @@ class DataViz(object):
 
         f = self._get_figure_instance(title=title, x_range=names, y_range=names, xlabel='', ylabel='',
                                       width=width, height=height)
-        f.tools = [PanTool(), ResetTool(), ResizeTool()]
+        f.tools = [PanTool(), ResetTool()]
         f.add_tools(HoverTool(tooltips=hover_tooltips))
         f.grid.grid_line_color = None
         f.axis.axis_line_color = None
@@ -349,7 +357,8 @@ class DataViz(object):
                 colors = self.binary_colors
             else:
                 colors = getattr(importlib.import_module(
-                    'bokeh.palettes'), self.colormap + str(len(legend)))
+                    'bokeh.palettes'), self.colormap)
+                colors = colors.__call__(len(legend))
             for m, s, c, l in zip(mean, std, colors, legend):
                 band_y = np.append(m - s, (m + s)[::-1])
                 fig.patch(band_x, band_y, color=c, fill_alpha=self.alpha)
@@ -407,7 +416,8 @@ class DataViz(object):
                 colors = self.binary_colors
             else:
                 colors = getattr(importlib.import_module(
-                    'bokeh.palettes'), self.colormap + str(len(legend)))
+                    'bokeh.palettes'), self.colormap)
+                colors = colors.__call__(len(legend))
             for y, c, l in zip(yvalues, colors, legend):
                 dsource = ColumnDataSource(data={
                     'x': xticks,
@@ -433,7 +443,6 @@ class DataViz(object):
 
         return fig
 
-
     def send_to_server(self, server="ssh.informatik.tu-muenchen.de", port=22, user="xiaohu"):
         '''
         send plots to remote hosting server
@@ -456,6 +465,6 @@ class DataViz(object):
         ftp = ssh.open_sftp()
         stats = ftp.put(self.output_file, "/u/halle/xiaohu/home_page/html-data/h3demo/" +
                         self.output_file.split('/')[-1])
-        print colored('{:s} is transferred to {:s} at {:s}'.format(self.output_file.split('/')[-1], server, str(stats.st_atime)), 'green')
+        print colored('{:s} is transferred to {:s} at {:s}'.format(
+            self.output_file.split('/')[-1], server, str(stats.st_atime)), 'green')
         return stats
-

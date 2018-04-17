@@ -27,7 +27,7 @@ from os import path
 
 setup(
     name='h3mlcore',
-    version='0.8dev',
+    version='0.81dev',
     url='https://github.com/CognutSecurity/h3mlcore',
     packages=find_packages(exclude=['test']),
     author='Huang Xiao',
@@ -66,13 +66,12 @@ setup(
         "dill == 0.2.5",
         "simplejson == 3.11.1",
         "libpgm == 1.3",
-        "bokeh == 0.12.7",
+        "bokeh == 0.12.15",
         "numpy == 1.13.1",
         "matplotlib == 1.5.1",
         "javalang == 0.11.0",
         "scikit_learn == 0.19.1",
         "PyYAML == 3.12",
-        "bokeh==0.12.7"
     ],
 
     python_requires='>=2.6, !=3.*',
