@@ -257,7 +257,7 @@ class DataViz(object):
             f.legend.location = legend_localtion
             f.legend.orientation = legend_orientation
 
-        return f
+        return f, X_proj
 
     def plot_corr(self, X, names=None,
                   title='Feature Correlations',

@@ -27,7 +27,7 @@ from os import path
 
 setup(
     name='h3mlcore',
-    version='0.81dev',
+    version='0.82dev',
     url='https://github.com/CognutSecurity/h3mlcore',
     packages=find_packages(exclude=['test']),
     author='Huang Xiao',
